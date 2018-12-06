@@ -61,7 +61,7 @@ def load_clean_data(input_data, input_fare):
     tripdata = spark.read.csv(input_data, header=False, schema=tripdata_schema)  
     filtertripdata = tripdata.filter((tripdata['trip_distance']>0) & (tripdata['pickup_longitude']!=0) & (tripdata['pickup_latitude']!=0) & (tripdata['dropoff_longitude']!=0) & (tripdata['dropoff_latitude']!=0)).drop('store_and_fwd_flag')
     fare_df = spark.read.csv(input_fare, header=False, schema=tripfare_schema)
-    joined_df = filtertripdata.join(fare_df,['medallion', 'hack_license','pickup_datetime'],"inner").drop(fare_df['pickup_datetime']).drop(fare_df['vendor_id']) 
+    joined_df = filtertripdata.join(fare_df,['medallion', 'hack_license','pickup_datetime'],"inner").drop(fare_df['pickup_datetime']).drop(fare_df['vendor_id']).drop(fare_df['surcharge']).drop(fare_df['mta_tax'])
     #calling the udf to spearate the datetime
     date_time_udf = functions.udf(set_timerange, types.StringType())
     final_df = joined_df.withColumn('time_of_day',date_time_udf(joined_df['pickup_datetime'])) 
