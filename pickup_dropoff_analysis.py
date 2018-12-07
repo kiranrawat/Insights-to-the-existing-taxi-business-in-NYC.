@@ -8,22 +8,18 @@ from datetime import datetime
 import preprocess as ps
 
 
-def main(input_data, input_fare):  
-    data = ps.load_clean_data(input_data,input_fare).cache()
-    selected_fields = data.select('pickup_datetime','dropoff_datetime')
-    weekly_pickups = selected_fields.groupBy(func.weekofyear('pickup_datetime')).agg(func.count('*').alias('weekly_pickups'))
-    weekly_dropoffs = selected_fields.groupBy(func.weekofyear('dropoff_datetime')).agg(func.count('*').alias('weekly_dropoffs'))
-    
+def main(input_data):  
+    #data = ps.load_clean_data(input_data,input_fare).cache()
+    #load preprocessed file here
+    data = spark.read.option("header","true").csv(input_data)
+    selected_fields = data.select('pickup_datetime','dropoff_datetime').cache()
+    weekly_pickups = selected_fields.groupBy(func.weekofyear('pickup_datetime')).agg(func.count('*').alias('weekly_pickups'))   
     #total pickups and dropoffs monthly trend
-    monthly_pickups = selected_fields.groupBy(func.month('pickup_datetime')).agg(func.count('*').alias('monthly_pickups'))
-    monthly_dropoffs = selected_fields.groupBy(func.month('dropoff_datetime')).agg(func.count('*').alias('monthly_dropoffs'))
-    
+    monthly_pickups = selected_fields.groupBy(func.month('pickup_datetime')).agg(func.count('*').alias('monthly_pickups'))   
     #save the analysis repsonse in json files
-    weekly_pickups.write.format('json').save("Weekly-Pickups")
-    weekly_dropoffs.write.format('json').save("Weekly-Dropoffs")
-    monthly_pickups.write.format('json').save("Monthly-Pickups")
-    monthly_dropoffs.write.format('json').save("Monthly-Dropoffs")
-    
+    weekly_pickups.write.format('json').mode('overwrite').save('Weekly-Pickups')
+    monthly_pickups.write.format('json').mode('overwrite').save('Monthly-Pickups')
+   
     
 if __name__ == '__main__':
     assert spark.version >= '2.3' # make sure we have Spark 2.3+
@@ -31,6 +27,5 @@ if __name__ == '__main__':
     sc = spark.sparkContext
     spark.catalog.clearCache()
     input_data = sys.argv[1]
-    input_fare = sys.argv[2]
-    main(input_data, input_fare)
+    main(input_data)
 

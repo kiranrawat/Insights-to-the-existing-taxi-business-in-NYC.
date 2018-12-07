@@ -1,11 +1,8 @@
 import sys
 assert sys.version_info >= (3, 5)  # make sure we have Python 3.5+
-import re, datetime
 from pyspark.sql import SparkSession, functions, types
 spark = SparkSession.builder.appName('NYC TAXI').getOrCreate()
 assert spark.version >= '2.3' # make sure we have Spark 2.3+
-spark.sparkContext.setLogLevel('WARN')
-sc = spark.sparkContext
 spark.catalog.clearCache()
 
 
@@ -24,10 +21,10 @@ def set_timerange(pickup_datetime):
   
 
 # the columns  headers across diff csvs are unevenly formatted , to sort the issue creating schemas to before load 
-def load_clean_data(input_data, input_fare):
+def main(input_data, input_fare, output_file):
     # main logic starts here 
     tripdata_schema = types.StructType([
-    types.StructField('medallion', types.StringType(), False),
+    types.StructField('medallion', types.StringType(), True),
     types.StructField('hack_license', types.StringType(), True),
     types.StructField('vendor_id', types.StringType(), True),
     types.StructField('rate_code', types.StringType(), True),
@@ -61,9 +58,16 @@ def load_clean_data(input_data, input_fare):
     tripdata = spark.read.csv(input_data, header=False, schema=tripdata_schema)  
     filtertripdata = tripdata.filter((tripdata['trip_distance']>0) & (tripdata['pickup_longitude']!=0) & (tripdata['pickup_latitude']!=0) & (tripdata['dropoff_longitude']!=0) & (tripdata['dropoff_latitude']!=0)).drop('store_and_fwd_flag')
     fare_df = spark.read.csv(input_fare, header=False, schema=tripfare_schema)
-    joined_df = filtertripdata.join(fare_df,['medallion', 'hack_license','pickup_datetime'],"inner").drop(fare_df['pickup_datetime']).drop(fare_df['vendor_id']).drop(fare_df['surcharge']).drop(fare_df['mta_tax'])
+    joined_df = filtertripdata.join(fare_df,['medallion', 'hack_license','pickup_datetime'],"inner").drop(fare_df['pickup_datetime']).drop(fare_df['vendor_id']).drop('surcharge').drop('mta_tax').drop('tolls_amount')
     #calling the udf to spearate the datetime
     date_time_udf = functions.udf(set_timerange, types.StringType())
     final_df = joined_df.withColumn('time_of_day',date_time_udf(joined_df['pickup_datetime'])) 
-    #final_df.write.option("header","true").csv(output_file,mode='overwrite')
-    return final_df
+    final_df.write.option("header","true").csv(output_file,mode='overwrite')
+
+if __name__ == '__main__':
+    spark.sparkContext.setLogLevel('WARN')
+    input_data = sys.argv[1]
+    input_fare = sys.argv[2]
+    output_file = sys.argv[3]
+    main(input_data, input_fare, output_file)
+
