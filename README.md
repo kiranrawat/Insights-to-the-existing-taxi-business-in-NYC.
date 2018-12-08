@@ -15,7 +15,12 @@ Our projects is divided into four main parts:
 1. Pre-processing Data
 First we begin by setting up the environment variable so that we can use it easily later. Example:
 export SPARK_HOME = /usr/local/spark
-As part of preprocessing step, we collected data, cleaned it by removing rows having zero distance values, zero trip duration and by restricting longitude and latitude values within 100 miles from the center of New York city. We also removed the columns that were out of scope of our analysis.
+As part of preprocessing step, we collected data, read it into dataframes, cleaned it by removing rows having zero distance values, zero trip duration values and by restricting longitude and latitude values within 100 miles from the center of New York city and removing the outliers. We also dropped the columns that were out of the scope of our analysis. Then we joined data and fare dataframes keeping all the necessary columns and stored the final output as csv files, so that it can be accessed easily when analyzing data.
+
+To do preprocessing we need three inputs- first path to the folder containing trip_data files for all 12 months, then path to the folder containing trip_fare files for all 12 months and third input would be path to the folder where the final output is stored. The following command can be used to preprocess records:
+
+${SPARK_HOME}/bin/spark-submit preprocess.py data/trip_data_1 data/trip_fare_1 dataset
+assuming data is present in the data folder and  final output will be stored n dataset folder
 
 2. Analysing Data
 3. Load data in ElasticSearch
