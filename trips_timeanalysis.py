@@ -12,8 +12,6 @@ def main(input_data):
     booking_df = selected_fields.groupby('vendor_id','time_of_day').agg(func.count('*').alias('count_bookings')) 
     #duration of the trip vs passenger count vs time of the day
     trip_pas_time = selected_fields.groupby('time_of_day').agg(func.sum('trip_time_in_secs').alias('total_duration'),func.sum('passenger_count').alias('total_passangers'))
-    #Cash vs card count
-    mostpref_paymnt = selected_fields.groupby('payment_type').agg(func.count('*').alias('count'))
     #total no. of trips in different times of the day
     total_trips = selected_fields.groupby('time_of_day').agg(func.count('*').alias('count_trips'))
     #avearge tip amount each time of the day
@@ -21,7 +19,6 @@ def main(input_data):
     
     booking_df.write.format('json').mode('overwrite').save('analysis_result/vendor_trips_time')
     trip_pas_time.write.format('json').mode('overwrite').save('analysis_result/trip_pass_time')
-    mostpref_paymnt.write.format('json').mode('overwrite').save('analysis_result/paymentmode')
     total_trips.write.format('json').mode('overwrite').save('analysis_result/trips_timeofday')
     tips.write.format('json').mode('overwrite').save('analysis_result/tips_timeofday')
     
