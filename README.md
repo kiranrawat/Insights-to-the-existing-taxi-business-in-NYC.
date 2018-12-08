@@ -1,6 +1,7 @@
 # Insights-to-the-existing-taxi-business-in-NYC
 
 ## Dataset
+Datasets can be downloaded from: https://github.com/andresmh/nyctaxitrips
 trip_data.7z (contains trip related information like pickup/dropoff date and time, rate code, vendor id, pickup/dropoff location's longitude and latitude values) 
 trip_fare.7z (contains trip's fare details like payment type, surcharges, tips, taxes, total amount paid )
   
@@ -26,11 +27,11 @@ export SPARK_HOME = /usr/local/spark
 ### Analysing Data
 After creating the preprocessed data, we have divided our analysis into four parts:
 - General analysis - Includes weekly and monthly trends based on vendors, rate_code, average fare, average distance, average duration, total passengers, total trips and other general insights on complete data.
-- Driver Based analysis - Included weekly and monthly trends for total trips, average trips, total fare, total passenegers, trip duration.
+- Driver Based analysis - Driver based analysis includes weekly and monthly trends for total and average number of trips, total fare, total passengers served, total duration of the trip for each driver. This can be used to compare performance of different drivers and measure single driver's performance over a period of time.
 - Time of the day based analysis - We divided pickup_datetime in 4 different part namely morning, afternoon, evening and night. Based on time_of_day we performed analysis to find total trips, average tips,total bookings for each provider,duration of the trip vs passenger count.
 - Payment  - Includes analysis on tip vs payment mode and most favoured payment mode.
  
-All analysis files can be found in trips_analysis folder and the following command can be used to run any of the analysis files:
+All analysis files can be found in trip_analysis folder and the following command can be used to run any of the analysis files:
 
 `${SPARK_HOME}/bin/spark-submit analysis_file_name.py path_to_preprocessed_data_folder`
  
