@@ -62,7 +62,7 @@ curl -XPUT "http://localhost:9200/monthlysummary" -H 'Content-Type: application/
 
 This can also be done by writing PUT request in Dev tool's section in Kibana if you dont want to use curl command. Next we use file logElastic.py in our main folder to transfer data corresponding to an amalysis to ElasticSearch. File logElastic.py needs one input i.e the name of the folder whose data we want to transfer. The following command can be used to load logs in ElasticSearch:
 
-${SPARK_HOME}/bin/spark-submit --jars path_to_the_jar_file/elasticsearch-spark-20_2.11-6.5.1.jar logElastic.py analysis_result/analysis_folder_name
+`${SPARK_HOME}/bin/spark-submit --jars path_to_the_jar_file/elasticsearch-spark-20_2.11-6.5.1.jar logElastic.py` analysis_result/analysis_folder_name
 
 logElastic.py file reads all json files from the input folder(analysis_folder_name) mentioned in the command and loads then to ElasticSearch. Number of documents indexed in your indexd can be checked by hitting the url http://localhost:9200/_cat/indices.
 
