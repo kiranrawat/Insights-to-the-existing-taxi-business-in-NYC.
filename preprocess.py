@@ -57,11 +57,17 @@ def main(input_data, input_fare, output_file):
     #reading the files and cleaning the data 
     tripdata = spark.read.csv(input_data, header=False, schema=tripdata_schema)
     fare_df = spark.read.csv(input_fare, header=False, schema=tripfare_schema)
+    nyclat = 40.719681
+    nyclon = -74.00536
+    nyclatmax = nyclat + 100/69
+    nyclatmin = nyclat - 100/69
+    nyclonmax = nyclon + 100/52
+    nyclonmin = nyclon - 100/52
     ftripdata = tripdata.filter((tripdata['trip_distance']>0) &
-                                (tripdata['pickup_longitude']!=0) & (tripdata['pickup_longitude']<180.00) & (tripdata['pickup_longitude']>-180) &
-                                (tripdata['pickup_latitude']!=0) & (tripdata['pickup_latitude']<90.00) & (tripdata['pickup_latitude']>-90.00) &
-                                (tripdata['dropoff_longitude']!=0) & (tripdata['dropoff_latitude']<90.00) & (tripdata['dropoff_latitude']>-90.00) &
-                                (tripdata['dropoff_latitude']!=0) & (tripdata['dropoff_longitude']<180.00) & (tripdata['dropoff_longitude']>-180)).drop('store_and_fwd_flag')
+                                (tripdata['pickup_longitude']!=0) & (tripdata['pickup_longitude']<nyclonmax) & (tripdata['pickup_longitude']>nyclonmin) &
+                                (tripdata['pickup_latitude']!=0) & (tripdata['pickup_latitude']<nyclatmax) & (tripdata['pickup_latitude']>nyclatmin) &
+                                (tripdata['dropoff_longitude']!=0) & (tripdata['dropoff_latitude']<nyclatmax) & (tripdata['dropoff_latitude']>nyclatmin) &
+                                (tripdata['dropoff_latitude']!=0) & (tripdata['dropoff_longitude']<nyclonmax) & (tripdata['dropoff_longitude']>nyclonmin)).drop('store_and_fwd_flag')
     
     #joining trip_data and trip_fare datasets based on medallion, hack_license and pickup_datetime columns
     joined_df = ftripdata.join(fare_df,['medallion', 'hack_license','pickup_datetime'],"inner").select(ftripdata['*'],
