@@ -20,7 +20,7 @@ export SPARK_HOME = /usr/local/spark
 - Then we joined data and fare dataframes keeping all the necessary columns and stored the final output as csv files, so that it can be accessed easily when analyzing data.
 - To do preprocessing we need three inputs- first path to the folder containing trip_data files for all 12 months, then path to the folder containing trip_fare files for all 12 months and third input would be path to the folder where the final output is stored. The following command can be used to preprocess records:
 
-`${SPARK_HOME}/bin/spark-submit preprocess.py` path_to_tripdata_folder/trip_data_1 path_to_tripfare_folder/trip_fare_1 output
+`${SPARK_HOME}/bin/spark-submit preprocess.py path_to_tripdata_folder/trip_data_1 path_to_tripfare_folder/trip_fare_1 output`
 
 ### Analysing Data
 After creating the preprocessed data, we have divided our analysis into four parts:
@@ -31,7 +31,7 @@ After creating the preprocessed data, we have divided our analysis into four par
  
 All analysis files can be found in trips_analysis folder and the following command can be used to run any of the analysis files:
 
-`${SPARK_HOME}/bin/spark-submit analysis_file_name.py` path_to_preprocessed_data_folder
+`${SPARK_HOME}/bin/spark-submit analysis_file_name.py path_to_preprocessed_data_folder`
  
 Here each analysis file requires the path to preprocessed data folder as input.
 
@@ -62,7 +62,7 @@ curl -XPUT "http://localhost:9200/monthlysummary" -H 'Content-Type: application/
 
 This can also be done by writing PUT request in Dev tool's section in Kibana if you dont want to use curl command. Next we use file logElastic.py in our main folder to transfer data corresponding to an amalysis to ElasticSearch. File logElastic.py needs one input i.e the name of the folder whose data we want to transfer. The following command can be used to load logs in ElasticSearch:
 
-`${SPARK_HOME}/bin/spark-submit --jars path_to_the_jar_file/elasticsearch-spark-20_2.11-6.5.1.jar logElastic.py` analysis_result/analysis_folder_name
+`${SPARK_HOME}/bin/spark-submit --jars path_to_the_jar_file/elasticsearch-spark-20_2.11-6.5.1.jar logElastic.py analysis_result/analysis_folder_name`
 
 logElastic.py file reads all json files from the input folder(analysis_folder_name) mentioned in the command and loads then to ElasticSearch. Number of documents indexed in your indexd can be checked by hitting the url http://localhost:9200/_cat/indices.
 
