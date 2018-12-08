@@ -5,12 +5,13 @@
   trip_fare.7z (contains trip's fare details like payment type, surcharges, tips, taxes, total amount paid )
   
 - Setup
-1. Download and install the following based on your operating system:
+Download and install the following based on your operating system:
     - Spark (https://spark.apache.org/downloads.html)
     - ElasticSearch (https://www.elastic.co/downloads/elasticsearch) 
     - Kibana (https://www.elastic.co/downloads/kibana)
     - ES-Hadoop (https://www.elastic.co/products/hadoop)
     
+- Project Components
 Our projects is divided into four main parts:
 1. Pre-processing Data
 First we begin by setting up the environment variable so that we can use it easily later. Example:
@@ -19,9 +20,51 @@ As part of preprocessing step, we collected data, read it into dataframes, clean
 
 To do preprocessing we need three inputs- first path to the folder containing trip_data files for all 12 months, then path to the folder containing trip_fare files for all 12 months and third input would be path to the folder where the final output is stored. The following command can be used to preprocess records:
 
-${SPARK_HOME}/bin/spark-submit preprocess.py data/trip_data_1 data/trip_fare_1 dataset
-assuming data is present in the data folder and  final output will be stored n dataset folder
+${SPARK_HOME}/bin/spark-submit preprocess.py path_to_tripdata_folder/trip_data_1 path_to_tripfare_folder/trip_fare_1 output
 
 2. Analysing Data
+Then we begin by anaysing the preprocessed data. We have divided our analysis into 4 parts:
+ - General analysis - 
+ - Driver Based analysis - 
+ - Time of the day based analysis -
+ - Payment  -
+ 
+ All analysis files can be found in trips_analysis folder and the following command can be used to run any of the analysis files:
+ ${SPARK_HOME}/bin/spark-submit analysis_file_name.py path_to_preprocessed_data_folder
+ 
+ Here each analysis file requires the path to preprocessed data folder as input.
+
+
 3. Load data in ElasticSearch
+After analysing the preprossed data and generating json output files for each analysis, we saved our data in ElasticSearch. For this we need to decided how to index our data, and mapping for each index in ElasticSearch. First we begin by staring ElasticSearch on our machine. Go to the main ElasticSeach folder and run the command bin/elasticsearch to get it running. We can check the status by opening url http://localhost:9200/  which gives us general about the running elastic cluster.
+
+Once ElasticSearch is up and running, we can create index and define its mapping using the following curl command(note this command creates an index named monthlysummary and document named driverrecord in the given index with mapping as specified in the JSON body ):
+curl -XPUT "http://localhost:9200/monthlysummary" -H 'Content-Type: application/json' -d'
+{
+"mappings":{
+    "driverrecord":{
+        "properties":{
+            "medallion":{"type":"keyword"},
+            "hack_license": {"type":"keyword"},
+            "month_number":{"type":"integer"},
+            "total_dist":{"type":"double"},
+            "total_fare":{"type":"double"},
+            "trip_count":{"type":"double"},
+            "passenger_count":{"type":"integer"}
+            }
+        }
+    }
+}'
+
+This can also be done by writing PUT request in Dev tool's section in Kibana if you dont want to use curl command. Next we use file logElastic.py in our main folder to transfer data corresponding to an amalysis to ElasticSearch. File logElastic.py needs one input i.e the name of the folder whose data we want to transfer. The following command can be used to load logs in ElasticSearch:
+
+${SPARK_HOME}/bin/spark-submit --jars path_to_the_jar_file/elasticsearch-spark-20_2.11-6.5.1.jar logElastic.py analysis_result/analysis_folder_name
+
+logElastic.py file reads all json files from the input folder(analysis_folder_name) mentioned in the command and loads then to ElasticSearch. Number of documents indexed in your indexd can be checked by hitting the url http://localhost:9200/_cat/indices.
+
 4. Visualization
+We are using Kibana Dashboard to visualize our aggregated data.
+For this we need to run Kibana. Go to the main Kibana folder in your machine and use bin/kibana command to start kibana. After you see 'Status changed from yellow to green - Ready' in the logs being displayed after running the command, open the url http://localhost:5601/app/kibana#/home?_g=() to access Kibana.
+
+For creating visualizations corresponding to our stored data, we first need to define index patterns which tell Kibana which ElasticSearch indices you want to explore. This can be done by going to the management section in Kibana and defining the name of index pattern there. Then we need to go to the visualization section and choose graphs/maps that suits our analysis. 
+then head to the dashboard section in Kibana, create a new dashboard, click on add button to add the visualizations you created.

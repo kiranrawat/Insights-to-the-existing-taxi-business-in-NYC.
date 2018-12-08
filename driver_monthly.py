@@ -7,16 +7,15 @@ spark.sparkContext.setLogLevel('WARN')
 sc = spark.sparkContext
 spark.catalog.clearCache()
 
-def main(input_data, output):
+def main(input_data):
     # main logic starts here
     tripdata = spark.read.option("header","true").csv(input_data)
-    monthly_summary = joined_df.groupBy('medallion', 'hack_license', sf.month('pickup_datetime').alias('p_month')).agg(sf.sum('trip_distance').alias('sum_dist'),
+    monthly_summary = tripdata.groupBy('medallion', 'hack_license', sf.month('pickup_datetime').alias('p_month')).agg(sf.sum('trip_distance').alias('sum_dist'),
                                                                                                                        sf.sum('total_amount').alias('sum_amount'),
                                                                                                                        sf.sum('trip_time_in_secs').alias('sum_trip'),
-                                                                                                                       sf.sum('passenger_count').alias('passenger_count'))
-    monthly_summary.write.format('json').mode('overwrite')save('driver_monthly')
+                                                                                                                       sf.sum('passenger_count').alias('passenger_count')).show()
+    monthly_summary.write.format('json').mode('overwrite').save('analysis_result/driver_monthly')
 
 if __name__ == '__main__':
     input_data = sys.argv[1]
-    output = sys.argv[2]
-    main(input_data, input_fare, output)
+    main(input_data)
