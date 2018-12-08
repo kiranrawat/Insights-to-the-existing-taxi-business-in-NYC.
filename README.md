@@ -1,7 +1,8 @@
 # Insights-to-the-existing-taxi-business-in-NYC
 
 ## Dataset
-trip_data.7z (contains trip related information like pickup/dropoff date and time, rate code, vendor id, pickup/dropoff location's longitude and latitude values) trip_fare.7z (contains trip's fare details like payment type, surcharges, tips, taxes, total amount paid )
+trip_data.7z (contains trip related information like pickup/dropoff date and time, rate code, vendor id, pickup/dropoff location's longitude and latitude values) 
+trip_fare.7z (contains trip's fare details like payment type, surcharges, tips, taxes, total amount paid )
   
 ## Setup
 Download and install the following based on your operating system:
