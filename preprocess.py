@@ -1,6 +1,6 @@
 import sys
 assert sys.version_info >= (3, 5)  # make sure we have Python 3.5+
-from pyspark.sql import SparkSession, functions, types
+from pyspark.sql import SparkSession, functions as sf, types
 spark = SparkSession.builder.appName('NYC TAXI').getOrCreate()
 assert spark.version >= '2.3' # make sure we have Spark 2.3+
 spark.catalog.clearCache()
@@ -55,13 +55,30 @@ def main(input_data, input_fare, output_file):
 ]) 
 
     #reading the files and cleaning the data 
-    tripdata = spark.read.csv(input_data, header=False, schema=tripdata_schema)  
-    filtertripdata = tripdata.filter((tripdata['trip_distance']>0) & (tripdata['pickup_longitude']!=0) & (tripdata['pickup_latitude']!=0) & (tripdata['dropoff_longitude']!=0) & (tripdata['dropoff_latitude']!=0)).drop('store_and_fwd_flag')
+    tripdata = spark.read.csv(input_data, header=False, schema=tripdata_schema)
     fare_df = spark.read.csv(input_fare, header=False, schema=tripfare_schema)
-    joined_df = filtertripdata.join(fare_df,['medallion', 'hack_license','pickup_datetime'],"inner").drop(fare_df['pickup_datetime']).drop(fare_df['vendor_id']).drop('surcharge').drop('mta_tax').drop('tolls_amount')
+    nyclat = 40.719681
+    nyclon = -74.00536
+    nyclatmax = nyclat + 100/69
+    nyclatmin = nyclat - 100/69
+    nyclonmax = nyclon + 100/52
+    nyclonmin = nyclon - 100/52
+    ftripdata = tripdata.filter((tripdata['trip_distance']>0) &
+                                (tripdata['pickup_longitude']!=0) & (tripdata['pickup_longitude']<nyclonmax) & (tripdata['pickup_longitude']>nyclonmin) &
+                                (tripdata['pickup_latitude']!=0) & (tripdata['pickup_latitude']<nyclatmax) & (tripdata['pickup_latitude']>nyclatmin) &
+                                (tripdata['dropoff_longitude']!=0) & (tripdata['dropoff_latitude']<nyclatmax) & (tripdata['dropoff_latitude']>nyclatmin) &
+                                (tripdata['dropoff_latitude']!=0) & (tripdata['dropoff_longitude']<nyclonmax) & (tripdata['dropoff_longitude']>nyclonmin)).drop('store_and_fwd_flag')
+    
+    #joining trip_data and trip_fare datasets based on medallion, hack_license and pickup_datetime columns
+    joined_df = ftripdata.join(fare_df,['medallion', 'hack_license','pickup_datetime'],"inner").select(ftripdata['*'],
+                                                                                                        fare_df['payment_type'], fare_df['fare_amount'], fare_df['tip_amount'], fare_df['total_amount'],
+                                                                                                        (sf.concat(ftripdata['pickup_latitude'],sf.lit(","),ftripdata['pickup_longitude'])).alias('pickupLoc'),
+                                                                                                        (sf.concat(ftripdata['dropoff_latitude'],sf.lit(","),ftripdata['dropoff_longitude'])).alias('dropoffLoc'))
+    #joined_df = filtertripdata.join(fare_df,['medallion', 'hack_license','pickup_datetime'],"inner").drop(fare_df['pickup_datetime']).drop(fare_df['vendor_id']).drop('surcharge').drop('mta_tax').drop('tolls_amount')
+
     #calling the udf to spearate the datetime
-    date_time_udf = functions.udf(set_timerange, types.StringType())
-    final_df = joined_df.withColumn('time_of_day',date_time_udf(joined_df['pickup_datetime'])) 
+    date_time_udf = sf.udf(set_timerange, types.StringType())
+    final_df = joined_df.withColumn('time_of_day',date_time_udf(joined_df['pickup_datetime']))
     final_df.write.option("header","true").csv(output_file,mode='overwrite')
 
 if __name__ == '__main__':
